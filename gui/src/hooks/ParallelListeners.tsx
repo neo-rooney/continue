@@ -87,6 +87,12 @@ function ParallelListeners() {
         "config/getSerializedProfileInfo",
         undefined,
       );
+      // TODO:DELETE
+      console.log(
+        "%c[Debug] Received config/getSerializedProfileInfo result:",
+        "color: #4e88e4; font-weight: bold; background: #f0f8ff; padding: 2px 4px; border-radius: 4px",
+        result,
+      );
       if (result.status === "success") {
         await handleConfigUpdate(initial, result.content);
       }

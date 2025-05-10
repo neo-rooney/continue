@@ -1,3 +1,18 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * 이 파일은 Continue 프로젝트의 ConfigHandler Class를 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025년 5월 10일에 이루어졌으며, 아래와 같은 변경이 이루어졌습니다.
+ * (1) 신규 CustomClient를 import
+ * (2) 신규 CustomClient 타입 정의
+ * (3) 신규 CustomClient를 초기화
+ * (4) getOrgs에서 customOrgs 반환하도록 기능 추가
+ * (5) getCustomOrg 메서드 신규 정의
+ * (6) getCustomProfiles 메서드 신규 정의
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import { ConfigResult } from "@continuedev/config-yaml";
 
 import {
@@ -14,7 +29,8 @@ import {
   ILLMLogger,
 } from "../index.js";
 import { GlobalContext } from "../util/GlobalContext.js";
-
+// (1) 신규 CustomClient를 import
+import { CustomClient } from "../control-plane/customClient.js";
 import { logger } from "../util/logger.js";
 import {
   ASSISTANTS,
@@ -37,6 +53,8 @@ type ConfigUpdateFunction = (payload: ConfigResult<ContinueConfig>) => void;
 
 export class ConfigHandler {
   controlPlaneClient: ControlPlaneClient;
+  // (2) 신규 CustomClient 타입 정의
+  customClient: CustomClient;
   private readonly globalContext = new GlobalContext();
   private globalLocalProfileManager: ProfileLifecycleManager;
 
@@ -56,6 +74,8 @@ export class ConfigHandler {
       sessionInfoPromise,
       ideSettingsPromise,
     );
+    // (3) 신규 CustomClient 초기화
+    this.customClient = new CustomClient();
 
     // This profile manager will always be available
     this.globalLocalProfileManager = new ProfileLifecycleManager(
@@ -134,18 +154,23 @@ export class ConfigHandler {
     this.currentProfile = selectedOrg.currentProfile;
     await this.reloadConfig();
   }
-
+  // (4) getOrgs에서 customOrgs 반환하도록 기능 추가
   private async getOrgs(): Promise<OrgWithProfiles[]> {
     const userId = await this.controlPlaneClient.userId;
+    const customOrgDescs = await this.customClient.listOrganizations();
+    const customOrgs = await Promise.all(
+      customOrgDescs.map((org) => this.getCustomOrg(org)),
+    );
+
     if (userId) {
       const orgDescs = await this.controlPlaneClient.listOrganizations();
       const personalHubOrg = await this.getPersonalHubOrg();
       const hubOrgs = await Promise.all(
         orgDescs.map((org) => this.getNonPersonalHubOrg(org)),
       );
-      return [...hubOrgs, personalHubOrg];
+      return [...customOrgs, ...hubOrgs, personalHubOrg];
     } else {
-      return [await this.getLocalOrg()];
+      return [...customOrgs, await this.getLocalOrg()];
     }
   }
 
@@ -491,5 +516,40 @@ export class ConfigHandler {
     return this.additionalContextProviders
       .filter((provider) => provider.description.type === "submenu")
       .map((provider) => provider.description.title);
+  }
+
+  // (5) getCustomOrg 메서드 신규 정의
+  private async getCustomOrg(
+    org: OrganizationDescription,
+  ): Promise<OrgWithProfiles> {
+    const profiles = [...(await this.getCustomProfiles(org.id))];
+    return this.rectifyProfilesForOrg(org, profiles);
+  }
+
+  // (6) getCustomProfiles 메서드 신규 정의
+  private async getCustomProfiles(
+    orgId: string,
+  ): Promise<ProfileLifecycleManager[]> {
+    const assistants = await this.customClient.listAssistants(orgId);
+
+    return await Promise.all(
+      assistants.map(async (assistant) => {
+        const profileLoader = await PlatformProfileLoader.create({
+          configResult: assistant.configResult,
+          ownerSlug: assistant.ownerSlug,
+          packageSlug: assistant.packageSlug,
+          iconUrl: assistant.iconUrl,
+          versionSlug: assistant.configResult.config?.version ?? "latest",
+          controlPlaneClient: this.controlPlaneClient,
+          ide: this.ide,
+          ideSettingsPromise: this.ideSettingsPromise,
+          llmLogger: this.llmLogger,
+          rawYaml: assistant.rawYaml,
+          orgScopeId: orgId,
+        });
+
+        return new ProfileLifecycleManager(profileLoader, this.ide);
+      }),
+    );
   }
 }

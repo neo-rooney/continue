@@ -75,7 +75,9 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch(
       setDialogMessage(
         <ConfirmationDialog
+          title="로그아웃"
           confirmText="로그아웃"
+          cancelText="취소"
           text="정말 로그아웃 하시겠습니까?"
           onConfirm={() => {
             // TODO: 실제 로그아웃 API 호출 구현

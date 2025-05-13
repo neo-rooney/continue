@@ -1,8 +1,19 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 Layout.tsx 파일을 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-13에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) CustomAuthProvider 추가
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import { useContext, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { CustomScrollbarDiv, defaultBorderRadius } from ".";
 import { AuthProvider } from "../context/Auth";
+import { CustomAuthProvider } from "../context/CustomAuth";
 import { IdeMessengerContext } from "../context/IdeMessenger";
 import { LocalStorageProvider } from "../context/LocalStorage";
 import { useWebviewListener } from "../hooks/useWebviewListener";
@@ -22,7 +33,6 @@ import { useMainEditor } from "./mainInput/TipTapEditor";
 import { isNewUserOnboarding, useOnboardingCard } from "./OnboardingCard";
 import OSRContextMenu from "./OSRContextMenu";
 import PostHogPageView from "./PosthogPageView";
-
 const LayoutTopDiv = styled(CustomScrollbarDiv)`
   height: 100%;
   border-radius: ${defaultBorderRadius};
@@ -206,38 +216,41 @@ const Layout = () => {
   return (
     <LocalStorageProvider>
       <AuthProvider>
-        <LayoutTopDiv>
-          <LumpProvider>
-            <OSRContextMenu />
-            <div
-              style={{
-                scrollbarGutter: "stable both-edges",
-                minHeight: "100%",
-                display: "grid",
-                gridTemplateRows: "1fr auto",
-              }}
-            >
-              <TextDialog
-                showDialog={showDialog}
-                onEnter={() => {
-                  dispatch(setShowDialog(false));
+        {/* (1) CustomAuthProvider 추가 */}
+        <CustomAuthProvider>
+          <LayoutTopDiv>
+            <LumpProvider>
+              <OSRContextMenu />
+              <div
+                style={{
+                  scrollbarGutter: "stable both-edges",
+                  minHeight: "100%",
+                  display: "grid",
+                  gridTemplateRows: "1fr auto",
                 }}
-                onClose={() => {
-                  dispatch(setShowDialog(false));
-                }}
-                message={dialogMessage}
-              />
+              >
+                <TextDialog
+                  showDialog={showDialog}
+                  onEnter={() => {
+                    dispatch(setShowDialog(false));
+                  }}
+                  onClose={() => {
+                    dispatch(setShowDialog(false));
+                  }}
+                  message={dialogMessage}
+                />
 
-              <GridDiv className="">
-                <PostHogPageView />
-                <Outlet />
-                <FatalErrorIndicator />
-                <Footer />
-              </GridDiv>
-            </div>
-            <div style={{ fontSize: fontSize(-4) }} id="tooltip-portal-div" />
-          </LumpProvider>
-        </LayoutTopDiv>
+                <GridDiv className="">
+                  <PostHogPageView />
+                  <Outlet />
+                  <FatalErrorIndicator />
+                  <Footer />
+                </GridDiv>
+              </div>
+              <div style={{ fontSize: fontSize(-4) }} id="tooltip-portal-div" />
+            </LumpProvider>
+          </LayoutTopDiv>
+        </CustomAuthProvider>
       </AuthProvider>
     </LocalStorageProvider>
   );

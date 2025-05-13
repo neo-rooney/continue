@@ -1,5 +1,14 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 ConfirmationDialog를 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-13에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) cancelText Props 추가
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import { useDispatch } from "react-redux";
-import styled from "styled-components";
 import { Button, SecondaryButton } from "..";
 import { setDialogMessage, setShowDialog } from "../../redux/slices/uiSlice";
 
@@ -10,6 +19,7 @@ interface ConfirmationDialogProps {
   title?: string;
   hideCancelButton?: boolean;
   confirmText?: string;
+  cancelText?: string;
 }
 
 function ConfirmationDialog(props: ConfirmationDialogProps) {
@@ -34,7 +44,8 @@ function ConfirmationDialog(props: ConfirmationDialogProps) {
               props.onCancel?.();
             }}
           >
-            Cancel
+            {/* (1) cancelText Props 추가*/}
+            {props.cancelText ?? "Cancel"}
           </SecondaryButton>
         )}
         <Button

@@ -26,6 +26,16 @@ export interface CustomOrgsResponse {
   error?: string;
 }
 
+interface CustomAssistant {
+  packageSlug: string;
+  rawYaml: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  version: string;
+  ownerSlug: string;
+}
+
 const CUSTOM_AUTH_TOKEN_KEY = "custom-auth-token";
 
 export class CustomAuthClient {
@@ -35,8 +45,6 @@ export class CustomAuthClient {
     id: string,
     password: string,
   ): Promise<CustomAuthResponse> {
-    console.log("[CustomAuth] Login attempt:", { id, password });
-
     try {
       // TODO: 실제 API 호출 구현
       // 임시로 성공 응답 반환 (실제로는 API 호출)
@@ -135,6 +143,146 @@ export class CustomAuthClient {
         success: false,
         error: "Failed to fetch organizations",
       };
+    }
+  }
+
+  async getAssistants(orgId: string): Promise<CustomAssistant[]> {
+    try {
+      // TODO: 실제 API 호출로 대체
+      // const response = await fetch(`${API_BASE_URL}/api/assistants?orgId=${orgId}`);
+      // return await response.json();
+
+      // Mock 데이터 반환 - orgId에 따라 다른 어시스턴트 반환
+      const mockAssistants: Record<string, CustomAssistant[]> = {
+        org_1: [
+          {
+            packageSlug: "assistant-1",
+            rawYaml: `
+name: Development Team Assistant
+version: 1.0.0
+schema: v1
+models:
+  - name: Llama 3.1 8B
+    provider: ollama
+    model: llama3.1:8b
+    roles:
+      - chat
+      - edit
+      - apply
+  - name: Qwen2.5-Coder 1.5B
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    roles:
+      - autocomplete
+  - name: Nomic Embed
+    provider: ollama
+    model: nomic-embed-text:latest
+    roles:
+      - embed
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase
+            `,
+            name: "Development Team Assistant",
+            description: "Assistant for Development Team",
+            iconUrl: "https://example.com/icon1.png",
+            version: "1.0.0",
+            ownerSlug: "org_1",
+          },
+        ],
+        org_2: [
+          {
+            packageSlug: "assistant-2",
+            rawYaml: `
+name: Design Team Assistant
+version: 1.0.0
+schema: v1
+models:
+  - name: Llama 3.1 8B
+    provider: ollama
+    model: llama3.1:8b
+    roles:
+      - chat
+      - edit
+      - apply
+  - name: Qwen2.5-Coder 1.5B
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    roles:
+      - autocomplete
+  - name: Nomic Embed
+    provider: ollama
+    model: nomic-embed-text:latest
+    roles:
+      - embed
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase
+            `,
+            name: "Design Team Assistant",
+            description: "Assistant for Design Team",
+            iconUrl: "https://example.com/icon2.png",
+            version: "1.0.0",
+            ownerSlug: "org_2",
+          },
+        ],
+        //         org_3: [
+        //           {
+        //             packageSlug: "assistant-3",
+        //             rawYaml: `
+        // name: Product Team Assistant
+        // version: 1.0.0
+        // schema: v1
+        // models:
+        //   - name: Llama 3.1 8B
+        //     provider: ollama
+        //     model: llama3.1:8b
+        //     roles:
+        //       - chat
+        //       - edit
+        //       - apply
+        //   - name: Qwen2.5-Coder 1.5B
+        //     provider: ollama
+        //     model: qwen2.5-coder:1.5b-base
+        //     roles:
+        //       - autocomplete
+        //   - name: Nomic Embed
+        //     provider: ollama
+        //     model: nomic-embed-text:latest
+        //     roles:
+        //       - embed
+        // context:
+        //   - provider: code
+        //   - provider: docs
+        //   - provider: diff
+        //   - provider: terminal
+        //   - provider: problems
+        //   - provider: folder
+        //   - provider: codebase
+        //             `,
+        //             name: "Product Team Assistant",
+        //             description: "Assistant for Product Team",
+        //             iconUrl: "https://example.com/icon3.png",
+        //             version: "1.0.0",
+        //             ownerSlug: "org_3",
+        //           },
+        //         ],
+      };
+
+      return mockAssistants[orgId] || [];
+    } catch (error) {
+      console.error("[CustomAuth] Failed to get assistants:", error);
+      return [];
     }
   }
 }

@@ -4,8 +4,11 @@
  * https://github.com/continuedev/continue
  *
  * 본 수정은 개발자 배철훈에 의해 2025-05-14에 이루어졌으며, 수정 사항은 다음과 같습니다.
- * (1) getOrgs 함수 수정
- * (2) updateCustomSessionInfo 함수 추가
+ * (1) custom login을 한 경우, custom Org 목록을 가져오는 방식을 추가(getOrgs)
+ * (2) custom login 성공하는 경우 cascadeInit 호출하도록 메서드 정의(updateCustomSessionInfo)
+ * (3) 커스텀 조직의 어시스턴트를 로드하고 프로필 생성 메서드 추가(getCustomOrg)
+ * (4) 커스텀 로그인을 한 경우, 커스텀 조직의 어시스턴트를 로드하고 프로필 생성하도록 분기(getLocalProfiles)
+ * (5) 기본 조직의 경우 .continue/assistants 디렉토리에서만 프로필 로드 수정(getLocalProfiles)
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -28,9 +31,11 @@ import { GlobalContext } from "../util/GlobalContext.js";
 
 import { CustomAuthClient } from "../control-plane/customClient.js";
 import { logger } from "../util/logger.js";
+import { joinPathsToUri } from "../util/uri.js";
 import {
   ASSISTANTS,
   getAllDotContinueYamlFiles,
+  listYamlFilesInDir,
   LoadAssistantFilesOptions,
 } from "./loadLocalAssistants.js";
 import LocalProfileLoader from "./profile/LocalProfileLoader.js";
@@ -42,6 +47,7 @@ import {
   ProfileLifecycleManager,
   SerializedOrgWithProfiles,
 } from "./ProfileLifecycleManager.js";
+import { saveCustomAssistant } from "./saveCustomAssistants.js";
 export type { ProfileDescription };
 
 type ConfigUpdateFunction = (payload: ConfigResult<ContinueConfig>) => void;
@@ -164,16 +170,12 @@ export class ConfigHandler {
       );
       return [...hubOrgs, personalHubOrg];
     } else if (isCustomAuthenticated) {
-      const orgs = await this.customAuthClient.getOrgs();
-      const customOrgs =
-        orgs.organizations?.map((org) => ({
-          ...org,
-          profiles: [],
-          currentProfile: null,
-        })) || [];
-      // Custom orgs를 OrgWithProfiles 형식으로 변환
-      // TODO: profiles는 빈 배열로 설정 (나중에 Assistant 목록 추가)
-      return [...customOrgs, await this.getLocalOrg()];
+      const customOrgDescs = await this.customAuthClient.getOrgs();
+      const orgs = await Promise.all(
+        customOrgDescs.organizations?.map((org) => this.getCustomOrg(org)) ??
+          [],
+      );
+      return [...orgs, await this.getLocalOrg()];
     } else {
       return [await this.getLocalOrg()];
     }
@@ -243,11 +245,17 @@ export class ConfigHandler {
     const profiles = [...hubProfiles, ...localProfiles];
     return this.rectifyProfilesForOrg(this.PERSONAL_ORG_DESC, profiles);
   }
-
+  /**
+   * @description 로컬 조직을 가져오는 함수
+   * @changes
+   * (5) 기본 조직의 경우 .continue/assistants 디렉토리에서만 프로필 로드 수정
+   * @returns 로컬 조직
+   */
   private async getLocalOrg() {
     const localProfiles = await this.getLocalProfiles({
       includeGlobal: true,
       includeWorkspace: true,
+      customDir: ".continue/assistants",
     });
     return this.rectifyProfilesForOrg(this.PERSONAL_ORG_DESC, localProfiles);
   }
@@ -295,7 +303,13 @@ export class ConfigHandler {
       currentProfile,
     };
   }
-
+  /**
+   * @description 로컬 프로필을 가져오는 함수
+   * @changes
+   * (4) 커스텀 로그인을 한 경우, 커스텀 조직의 어시스턴트를 로드하고 프로필 생성하도록 분기
+   * @param options
+   * @returns 로컬 프로필 목록
+   */
   async getLocalProfiles(options: LoadAssistantFilesOptions) {
     /**
      * Users can define as many local assistants as they want in a `.continue/assistants` folder
@@ -307,11 +321,10 @@ export class ConfigHandler {
     }
 
     if (options.includeWorkspace) {
-      const assistantFiles = await getAllDotContinueYamlFiles(
-        this.ide,
-        options,
-        ASSISTANTS,
-      );
+      const assistantFiles = options.customDir
+        ? await listYamlFilesInDir(this.ide, options.customDir)
+        : await getAllDotContinueYamlFiles(this.ide, options, ASSISTANTS);
+
       const profiles = assistantFiles.map((assistant) => {
         return new LocalProfileLoader(
           this.ide,
@@ -525,9 +538,61 @@ export class ConfigHandler {
   /**
    * @description 커스텀 세션 정보를 업데이트하여 조직 목록을 갱신하는 함수
    * @changes
-   * (1) custom login 성공하는 경우 cascadeInit 호출하도록
+   * (1) custom login 성공하는 경우 cascadeInit 호출하도록 메서드 정의
    */
   async updateCustomSessionInfo() {
     await this.cascadeInit();
+  }
+  /**
+   * (3) 커스텀 조직의 어시스턴트를 로드하고 프로필 생성 메서드 추가
+   * @description 커스텀 조직의 어시스턴트를 로드하고 프로필 생성
+   * @param org 커스텀 조직 정보
+   * @returns 커스텀 조직의 프로필 정보
+   */
+  private async getCustomOrg(
+    org: OrganizationDescription,
+  ): Promise<OrgWithProfiles> {
+    try {
+      // 1. 서버에서 어시스턴트 목록 가져오기
+      const assistants = await this.customAuthClient.getAssistants(org.id);
+
+      // 2. 각 어시스턴트를 로컬에 저장
+      const savedPaths = await Promise.all(
+        assistants.map((assistant) =>
+          saveCustomAssistant(this.ide, assistant, org.id),
+        ),
+      );
+
+      // 3. 워크스페이스 디렉토리 가져오기
+      const workspaceDirs = await this.ide.getWorkspaceDirs();
+      if (workspaceDirs.length === 0) {
+        throw new Error("워크스페이스 디렉토리를 찾을 수 없습니다");
+      }
+
+      // 4. 해당 org의 디렉토리에서만 프로필 로드 (URI 형식 사용)
+      const customDir = joinPathsToUri(
+        workspaceDirs[0],
+        ".continue",
+        org.id,
+        "assistants",
+      );
+
+      const customProfiles = await this.getLocalProfiles({
+        includeGlobal: false,
+        includeWorkspace: true,
+        customDir,
+      });
+
+      // 5. 조직 정보와 프로필을 결합
+      const result = this.rectifyProfilesForOrg(org, customProfiles);
+
+      return result;
+    } catch (error) {
+      console.error(
+        `[ConfigHandler] 커스텀 조직(${org.id})의 어시스턴트 로드 실패:`,
+        error,
+      );
+      return this.rectifyProfilesForOrg(org, []);
+    }
   }
 }

@@ -557,7 +557,7 @@ export class ConfigHandler {
       const assistants = await this.customAuthClient.getAssistants(org.id);
 
       // 2. 각 어시스턴트를 로컬에 저장
-      const savedPaths = await Promise.all(
+      await Promise.all(
         assistants.map((assistant) =>
           saveCustomAssistant(this.ide, assistant, org.id),
         ),

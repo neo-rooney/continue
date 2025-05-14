@@ -25,15 +25,11 @@ export interface CustomOrgsResponse {
   organizations?: OrganizationDescription[];
   error?: string;
 }
-
-interface CustomAssistant {
-  packageSlug: string;
+export interface CustomAssistant {
+  slug: string;
   rawYaml: string;
   name: string;
-  description: string;
   iconUrl: string;
-  version: string;
-  ownerSlug: string;
 }
 
 const CUSTOM_AUTH_TOKEN_KEY = "custom-auth-token";
@@ -156,7 +152,7 @@ export class CustomAuthClient {
       const mockAssistants: Record<string, CustomAssistant[]> = {
         org_1: [
           {
-            packageSlug: "assistant-1",
+            slug: "assistant-1",
             rawYaml: `
 name: Development Team Assistant
 version: 1.0.0
@@ -189,15 +185,12 @@ context:
   - provider: codebase
             `,
             name: "Development Team Assistant",
-            description: "Assistant for Development Team",
             iconUrl: "https://example.com/icon1.png",
-            version: "1.0.0",
-            ownerSlug: "org_1",
           },
         ],
         org_2: [
           {
-            packageSlug: "assistant-2",
+            slug: "assistant-2",
             rawYaml: `
 name: Design Team Assistant
 version: 1.0.0
@@ -230,18 +223,14 @@ context:
   - provider: codebase
             `,
             name: "Design Team Assistant",
-            description: "Assistant for Design Team",
             iconUrl: "https://example.com/icon2.png",
-            version: "1.0.0",
-            ownerSlug: "org_2",
           },
         ],
         //         org_3: [
         //           {
-        //             packageSlug: "assistant-3",
+        //             slug: "assistant-3",
         //             rawYaml: `
         // name: Product Team Assistant
-        // version: 1.0.0
         // schema: v1
         // models:
         //   - name: Llama 3.1 8B
@@ -271,10 +260,8 @@ context:
         //   - provider: codebase
         //             `,
         //             name: "Product Team Assistant",
-        //             description: "Assistant for Product Team",
         //             iconUrl: "https://example.com/icon3.png",
         //             version: "1.0.0",
-        //             ownerSlug: "org_3",
         //           },
         //         ],
       };

@@ -9,18 +9,8 @@
  */
 
 import { IDE } from "..";
+import { CustomAssistant } from "../control-plane/customClient";
 import { joinPathsToUri } from "../util/uri";
-
-export interface CustomAssistant {
-  packageSlug: string;
-  rawYaml: string;
-  name: string;
-  description: string;
-  iconUrl: string;
-  version: string;
-  ownerSlug: string;
-}
-
 /**
  * 커스텀 어시스턴트를 워크스페이스의 .continue/{org_id}/assistants 디렉토리에 저장
  * @param ide IDE 인스턴스
@@ -49,7 +39,7 @@ export async function saveCustomAssistant(
       : joinPathsToUri(workspaceDir, ".continue", "assistants");
 
     // 파일명 생성 (packageSlug.yaml)
-    const fileName = `${assistant.packageSlug}.yaml`;
+    const fileName = `${assistant.slug}.yaml`;
     const filePath = joinPathsToUri(dirPath, fileName);
 
     // YAML 파일 저장 (디렉토리가 없으면 자동으로 생성됨)

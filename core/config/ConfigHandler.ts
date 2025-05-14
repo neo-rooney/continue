@@ -1,3 +1,13 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 core.ts 파일을 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-14에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) getOrgs 함수 수정
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import { ConfigResult } from "@continuedev/config-yaml";
 
 import {
@@ -15,6 +25,7 @@ import {
 } from "../index.js";
 import { GlobalContext } from "../util/GlobalContext.js";
 
+import { CustomAuthClient } from "../control-plane/customClient.js";
 import { logger } from "../util/logger.js";
 import {
   ASSISTANTS,
@@ -30,7 +41,6 @@ import {
   ProfileLifecycleManager,
   SerializedOrgWithProfiles,
 } from "./ProfileLifecycleManager.js";
-
 export type { ProfileDescription };
 
 type ConfigUpdateFunction = (payload: ConfigResult<ContinueConfig>) => void;
@@ -43,7 +53,7 @@ export class ConfigHandler {
   private organizations: OrgWithProfiles[] = [];
   currentProfile: ProfileLifecycleManager | null;
   currentOrg: OrgWithProfiles;
-
+  private customAuthClient: CustomAuthClient;
   constructor(
     private readonly ide: IDE,
     private ideSettingsPromise: Promise<IdeSettings>,
@@ -56,6 +66,8 @@ export class ConfigHandler {
       sessionInfoPromise,
       ideSettingsPromise,
     );
+
+    this.customAuthClient = new CustomAuthClient(ide);
 
     // This profile manager will always be available
     this.globalLocalProfileManager = new ProfileLifecycleManager(
@@ -134,9 +146,16 @@ export class ConfigHandler {
     this.currentProfile = selectedOrg.currentProfile;
     await this.reloadConfig();
   }
-
+  /**
+   * @description 조직 목록을 가져오는 함수
+   * @changes
+   * (1) custom login을 한 경우, custom Org 목록을 가져오는 방식을 추가
+   * @returns 조직 목록
+   */
   private async getOrgs(): Promise<OrgWithProfiles[]> {
     const userId = await this.controlPlaneClient.userId;
+    const isCustomAuthenticated = await this.customAuthClient.isAuthenticated();
+
     if (userId) {
       const orgDescs = await this.controlPlaneClient.listOrganizations();
       const personalHubOrg = await this.getPersonalHubOrg();
@@ -144,6 +163,17 @@ export class ConfigHandler {
         orgDescs.map((org) => this.getNonPersonalHubOrg(org)),
       );
       return [...hubOrgs, personalHubOrg];
+    } else if (isCustomAuthenticated) {
+      const orgs = await this.customAuthClient.getOrgs();
+      const customOrgs =
+        orgs.organizations?.map((org) => ({
+          ...org,
+          profiles: [],
+          currentProfile: null,
+        })) || [];
+      // Custom orgs를 OrgWithProfiles 형식으로 변환
+      // TODO: profiles는 빈 배열로 설정 (나중에 Assistant 목록 추가)
+      return [...customOrgs, await this.getLocalOrg()];
     } else {
       return [await this.getLocalOrg()];
     }

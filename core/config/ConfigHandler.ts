@@ -5,6 +5,7 @@
  *
  * 본 수정은 개발자 배철훈에 의해 2025-05-14에 이루어졌으며, 수정 사항은 다음과 같습니다.
  * (1) getOrgs 함수 수정
+ * (2) updateCustomSessionInfo 함수 추가
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -155,7 +156,6 @@ export class ConfigHandler {
   private async getOrgs(): Promise<OrgWithProfiles[]> {
     const userId = await this.controlPlaneClient.userId;
     const isCustomAuthenticated = await this.customAuthClient.isAuthenticated();
-
     if (userId) {
       const orgDescs = await this.controlPlaneClient.listOrganizations();
       const personalHubOrg = await this.getPersonalHubOrg();
@@ -521,5 +521,13 @@ export class ConfigHandler {
     return this.additionalContextProviders
       .filter((provider) => provider.description.type === "submenu")
       .map((provider) => provider.description.title);
+  }
+  /**
+   * @description 커스텀 세션 정보를 업데이트하여 조직 목록을 갱신하는 함수
+   * @changes
+   * (1) custom login 성공하는 경우 cascadeInit 호출하도록
+   */
+  async updateCustomSessionInfo() {
+    await this.cascadeInit();
   }
 }

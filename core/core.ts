@@ -777,7 +777,9 @@ export class Core {
       const { id, password } = msg.data;
       try {
         const response = await this.customAuthClient.login(id, password);
-
+        if (response.success) {
+          await this.configHandler.updateCustomSessionInfo();
+        }
         return response;
       } catch (error) {
         console.error("[CustomAuth] Login failed:", error);
@@ -789,6 +791,9 @@ export class Core {
     on("custom/logout", async () => {
       try {
         const response = await this.customAuthClient.logout();
+        if (response.success) {
+          await this.configHandler.updateCustomSessionInfo();
+        }
         return response;
       } catch (error) {
         console.error("[CustomAuth] Logout failed:", error);

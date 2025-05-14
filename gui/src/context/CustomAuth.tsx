@@ -47,21 +47,19 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     password: string,
   ) => {
     try {
-      // TODO: 실제 로그인 API 호출 구현
-      // 예시:
-      // const response = await ideMessenger.request("customLogin", {
-      //   id,
-      //   password,
-      // });
+      const response = await ideMessenger.request("custom/login", {
+        id,
+        password,
+      });
 
-      // 임시 로그인 로직 (실제 구현 시 제거)
-      if (id && password) {
+      console.log("[CustomAuth] Login response:", response);
+
+      if (response.status === "success" && response.content.success) {
         setUser({ id });
         setIsAuthenticated(true);
         setError(null);
         return true;
       }
-
       return false;
     } catch (err) {
       setError("로그인에 실패했습니다.");
@@ -79,13 +77,23 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({
           confirmText="로그아웃"
           cancelText="취소"
           text="정말 로그아웃 하시겠습니까?"
-          onConfirm={() => {
-            // TODO: 실제 로그아웃 API 호출 구현
-            setUser(null);
-            setIsAuthenticated(false);
-            setError(null);
-            dispatch(setDialogMessage(undefined));
-            dispatch(setShowDialog(false));
+          onConfirm={async () => {
+            try {
+              const response = await ideMessenger.request(
+                "custom/logout",
+                undefined,
+              );
+
+              if (response.status === "success" && response.content.success) {
+                setUser(null);
+                setIsAuthenticated(false);
+                setError(null);
+                dispatch(setDialogMessage(undefined));
+                dispatch(setShowDialog(false));
+              }
+            } catch (e) {
+              setError("로그아웃에 실패했습니다.");
+            }
           }}
           onCancel={() => {
             dispatch(setDialogMessage(undefined));
@@ -100,15 +108,28 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // TODO: 실제 세션 체크 API 호출 구현
-        // 예시:
-        // const result = await ideMessenger.request("checkSession", undefined);
-        // if (result.status === "success") {
-        //   setUser(result.content.user);
-        //   setIsAuthenticated(true);
-        // }
+        const response = await ideMessenger.request(
+          "custom/checkAuth",
+          undefined,
+        );
+
+        if (response.status === "success") {
+          const { isAuthenticated: authStatus } = response.content;
+
+          if (authStatus) {
+            // 토큰이 있다면 사용자 정보를 가져오는 API 호출
+            // TODO: 실제 사용자 정보를 가져오는 API 구현
+            setUser({ id: "user123" }); // 임시로 하드코딩된 사용자 정보
+            setIsAuthenticated(true);
+          } else {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        }
       } catch (err) {
-        console.error("세션 체크 실패", err);
+        console.error("[CustomAuth] Session check failed:", err);
+        setUser(null);
+        setIsAuthenticated(false);
       }
     };
 

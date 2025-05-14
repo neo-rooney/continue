@@ -1,3 +1,15 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 passThrough.ts 파일을 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-13에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) 로그인 메세지 핸들러 PASS THROUGH 추가
+ * (2) 로그아웃 메세지 핸들러 PASS THROUGH 추가
+ * (3) 토큰 검증 메세지 핸들러 PASS THROUGH 추가
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import {
   ToCoreFromWebviewProtocol,
   ToWebviewFromCoreProtocol,
@@ -64,6 +76,12 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "isItemTooBig",
     "process/markAsBackgrounded",
     "process/isBackgrounded",
+    // (1) 로그인 메세지 핸들러 PASS THROUGH 추가
+    "custom/login",
+    // (2) 로그아웃 메세지 핸들러 PASS THROUGH 추가
+    "custom/logout",
+    // (3) 토큰 검증 메세지 핸들러 PASS THROUGH 추가
+    "custom/checkAuth",
   ];
 
 // Message types to pass through from core to webview

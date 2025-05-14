@@ -1,3 +1,15 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 core.ts 파일을 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-13에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) 로그인 메세지 핸들러 정의
+ * (2) 로그아웃 메세지 핸들러 정의
+ * (3) 토큰 검증 메세지 핸들러 정의
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import { fetchwithRequestOptions } from "@continuedev/fetch";
 import * as URI from "uri-js";
 import { v4 as uuidv4 } from "uuid";
@@ -54,6 +66,7 @@ import {
 } from "./config/onboarding";
 import { createNewWorkspaceBlockFile } from "./config/workspace/workspaceBlocks";
 import { MCPManagerSingleton } from "./context/mcp/MCPManagerSingleton";
+import { CustomAuthClient } from "./control-plane/customClient";
 import { streamDiffLines } from "./edit/streamDiffLines";
 import { shouldIgnore } from "./indexing/shouldIgnore";
 import { walkDirCache } from "./indexing/walkDir";
@@ -133,6 +146,8 @@ export class Core {
   );
 
   private abortedMessageIds: Set<string> = new Set();
+
+  private customAuthClient: CustomAuthClient;
 
   invoke<T extends keyof ToCoreProtocol>(
     messageType: T,
@@ -272,6 +287,8 @@ export class Core {
       (e) => {},
       (..._) => Promise.resolve([]),
     );
+
+    this.customAuthClient = new CustomAuthClient(this.ide);
 
     this.registerMessageHandlers(ideSettingsPromise);
   }
@@ -754,6 +771,41 @@ export class Core {
         return isBackgrounded; // Return true to indicate the message was handled successfully
       },
     );
+
+    // (1) 로그인 메세지 핸들러 정의
+    on("custom/login", async (msg) => {
+      const { id, password } = msg.data;
+      try {
+        const response = await this.customAuthClient.login(id, password);
+
+        return response;
+      } catch (error) {
+        console.error("[CustomAuth] Login failed:", error);
+        return { success: false };
+      }
+    });
+
+    // (2) 로그아웃 메세지 핸들러 정의
+    on("custom/logout", async () => {
+      try {
+        const response = await this.customAuthClient.logout();
+        return response;
+      } catch (error) {
+        console.error("[CustomAuth] Logout failed:", error);
+        return { success: false };
+      }
+    });
+
+    // (3) 토큰 검증 메세지 핸들러 정의
+    on("custom/checkAuth", async () => {
+      try {
+        const isAuthenticated = await this.customAuthClient.isAuthenticated();
+        return { isAuthenticated };
+      } catch (error) {
+        console.error("[CustomAuth] Auth check failed:", error);
+        return { isAuthenticated: false };
+      }
+    });
   }
 
   private async isItemTooBig(item: ContextItemWithId) {

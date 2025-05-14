@@ -21,6 +21,7 @@ export default function CustomSesstion() {
     <div className="flex w-full flex-col gap-3">
       <div className="flex justify-between">
         <div className="flex flex-col">
+          {/* TODO: 로그인 정보 표시 */}
           <span className="font-medium">ID 정보</span>
           <span className="text-lightgray text-sm">Cheolhun.bae(BWG)</span>
         </div>

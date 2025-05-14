@@ -29,7 +29,7 @@ export interface CustomAssistant {
   slug: string;
   rawYaml: string;
   name: string;
-  iconUrl: string;
+  iconUrl?: string;
 }
 
 const CUSTOM_AUTH_TOKEN_KEY = "custom-auth-token";

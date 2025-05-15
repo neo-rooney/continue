@@ -7,6 +7,8 @@
  * (1) 로그인 메세지 핸들러 Type 정의
  * (2) 로그아웃 메세지 핸들러 Type 정의
  * (3) 토큰 검증 메세지 핸들러 Type 정의
+ * (4) Custom Config 가져오기 메세지 핸들러 Type 정의
+ * (5) Custom Config 설정 메세지 핸들러 Type 정의
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -25,5 +27,12 @@ export type ToCoreFromWebviewProtocol = ToCoreFromIdeOrWebviewProtocol & {
   "custom/logout": [undefined, { success: boolean }];
   // (3) 토큰 검증 메세지 핸들러 Type 정의
   "custom/checkAuth": [undefined, { isAuthenticated: boolean }];
+  // (4) Custom Config 가져오기 메세지 핸들러 Type 정의
+  "custom/getConfig": [undefined, { rootDir: string; apiUrl: string }];
+  // (5) Custom Config 설정 메세지 핸들러 Type 정의
+  "custom/setConfig": [
+    { rootDir: string; apiUrl: string },
+    { rootDir: string; apiUrl: string },
+  ];
 };
 export type ToWebviewFromCoreProtocol = ToWebviewFromIdeOrCoreProtocol;

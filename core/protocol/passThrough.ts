@@ -7,6 +7,8 @@
  * (1) 로그인 메세지 핸들러 PASS THROUGH 추가
  * (2) 로그아웃 메세지 핸들러 PASS THROUGH 추가
  * (3) 토큰 검증 메세지 핸들러 PASS THROUGH 추가
+ * (4) Custom Config 가져오기 메세지 핸들러 PASS THROUGH 추가
+ * (5) Custom Config 설정 메세지 핸들러 PASS THROUGH 추가
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -82,6 +84,10 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "custom/logout",
     // (3) 토큰 검증 메세지 핸들러 PASS THROUGH 추가
     "custom/checkAuth",
+    // (4) Custom Config 가져오기 메세지 핸들러 PASS THROUGH 추가
+    "custom/getConfig",
+    // (5) Custom Config 설정 메세지 핸들러 PASS THROUGH 추가
+    "custom/setConfig",
   ];
 
 // Message types to pass through from core to webview

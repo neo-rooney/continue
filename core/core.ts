@@ -7,6 +7,8 @@
  * (1) 로그인 메세지 핸들러 정의
  * (2) 로그아웃 메세지 핸들러 정의
  * (3) 토큰 검증 메세지 핸들러 정의
+ * (4) Custom Config 가져오기 메세지 핸들러 정의
+ * (5) Custom Config 설정 메세지 핸들러 정의
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -17,7 +19,7 @@ import { v4 as uuidv4 } from "uuid";
 import { CompletionProvider } from "./autocomplete/CompletionProvider";
 import { ConfigHandler } from "./config/ConfigHandler";
 import { SYSTEM_PROMPT_DOT_FILE } from "./config/getWorkspaceContinueRuleDotFiles";
-import { addModel, deleteModel } from "./config/util";
+import { addModel, deleteModel, getCustomRootDir } from "./config/util";
 import CodebaseContextProvider from "./context/providers/CodebaseContextProvider";
 import CurrentFileContextProvider from "./context/providers/CurrentFileContextProvider";
 import { recentlyEditedFilesCache } from "./context/retrieval/recentlyEditedFilesCache";
@@ -809,6 +811,29 @@ export class Core {
       } catch (error) {
         console.error("[CustomAuth] Auth check failed:", error);
         return { isAuthenticated: false };
+      }
+    });
+    // (4) Custom Config 가져오기 핸들러 정의
+    on("custom/getConfig", async () => {
+      try {
+        const rootDir = await getCustomRootDir(this.ide);
+        const apiUrl = "";
+        return { rootDir, apiUrl };
+      } catch (error) {
+        console.error("Failed to get custom settings:", error);
+        return { rootDir: "", apiUrl: "" };
+      }
+    });
+    // (5) Custom Config 설정 핸들러 정의
+    on("custom/setConfig", async (msg) => {
+      const { rootDir, apiUrl } = msg.data;
+
+      try {
+        await this.configHandler.updateCustomConfigAndReInit(rootDir, apiUrl);
+        return { rootDir, apiUrl };
+      } catch (error) {
+        console.error("Failed to get custom settings:", error);
+        return { rootDir: "", apiUrl: "" };
       }
     });
   }

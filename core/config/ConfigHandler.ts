@@ -9,6 +9,7 @@
  * (3) 커스텀 조직의 어시스턴트를 로드하고 프로필 생성 메서드 추가(getCustomOrg)
  * (4) 커스텀 로그인을 한 경우, 커스텀 조직의 어시스턴트를 로드하고 프로필 생성하도록 분기(getLocalProfiles)
  * (5) 기본 조직의 경우 .continue/assistants 디렉토리에서만 프로필 로드 수정(getLocalProfiles)
+ * (6) 커스텀 설정을 변경한 경우 설정 파일을 업데이트하고, 커스텀 세션 정보를 업데이트하도록 추가(updateCustomConfigAndReInit)
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -48,6 +49,11 @@ import {
   SerializedOrgWithProfiles,
 } from "./ProfileLifecycleManager.js";
 import { saveCustomAssistant } from "./saveCustomAssistants.js";
+import {
+  getCustomRootDir,
+  initializeCustomConfig,
+  updateCustomConfig,
+} from "./util.js";
 export type { ProfileDescription };
 
 type ConfigUpdateFunction = (payload: ConfigResult<ContinueConfig>) => void;
@@ -170,6 +176,7 @@ export class ConfigHandler {
       );
       return [...hubOrgs, personalHubOrg];
     } else if (isCustomAuthenticated) {
+      await initializeCustomConfig(this.ide);
       const customOrgDescs = await this.customAuthClient.getOrgs();
       const orgs = await Promise.all(
         customOrgDescs.organizations?.map((org) => this.getCustomOrg(org)) ??
@@ -569,10 +576,13 @@ export class ConfigHandler {
         throw new Error("워크스페이스 디렉토리를 찾을 수 없습니다");
       }
 
-      // 4. 해당 org의 디렉토리에서만 프로필 로드 (URI 형식 사용)
+      // 4. 설정 파일에서 rootDir 가져오기
+      const rootDir = await getCustomRootDir(this.ide);
+
+      // 5. 해당 org의 디렉토리에서만 프로필 로드 (URI 형식 사용)
       const customDir = joinPathsToUri(
         workspaceDirs[0],
-        ".continue",
+        rootDir,
         org.id,
         "assistants",
       );
@@ -583,7 +593,7 @@ export class ConfigHandler {
         customDir,
       });
 
-      // 5. 조직 정보와 프로필을 결합
+      // 6. 조직 정보와 프로필을 결합
       const result = this.rectifyProfilesForOrg(org, customProfiles);
 
       return result;
@@ -594,5 +604,16 @@ export class ConfigHandler {
       );
       return this.rectifyProfilesForOrg(org, []);
     }
+  }
+  /**
+   * @description 커스텀 설정을 업데이트하는 함수
+   * @changes
+   * (6) 커스텀 설정을 변경한 경우 설정 파일을 업데이트하고, 커스텀 세션 정보를 업데이트하도록 추가
+   * @param rootDir 커스텀 루트 디렉토리
+   * @param apiUrl 커스텀 API URL
+   */
+  async updateCustomConfigAndReInit(rootDir: string, apiUrl: string) {
+    await updateCustomConfig(this.ide, rootDir, apiUrl);
+    await this.cascadeInit();
   }
 }

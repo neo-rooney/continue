@@ -11,6 +11,7 @@
 import { IDE } from "..";
 import { CustomAssistant } from "../control-plane/customClient";
 import { joinPathsToUri } from "../util/uri";
+import { getCustomRootDir } from "./util";
 /**
  * 커스텀 어시스턴트를 워크스페이스의 .continue/{org_id}/assistants 디렉토리에 저장
  * @param ide IDE 인스턴스
@@ -33,10 +34,13 @@ export async function saveCustomAssistant(
     // 첫 번째 워크스페이스 디렉토리 사용
     const workspaceDir = workspaceDirs[0];
 
+    // 설정 파일에서 rootDir 가져오기
+    const rootDir = await getCustomRootDir(ide);
+
     // 저장 경로 설정
     const dirPath = orgId
-      ? joinPathsToUri(workspaceDir, ".continue", orgId, "assistants")
-      : joinPathsToUri(workspaceDir, ".continue", "assistants");
+      ? joinPathsToUri(workspaceDir, rootDir, orgId, "assistants")
+      : joinPathsToUri(workspaceDir, rootDir, "assistants");
 
     // 파일명 생성 (packageSlug.yaml)
     const fileName = `${assistant.slug}.yaml`;

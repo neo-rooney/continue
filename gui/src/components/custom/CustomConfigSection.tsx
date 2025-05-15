@@ -50,7 +50,7 @@ export function CustomConfigSection() {
   return (
     <div className="flex flex-col gap-2 border-0 border-b-[1px] border-solid border-b-zinc-700 p-4">
       <div>
-        <h2 className="mb-2 mt-0 p-0">Custom 설정</h2>
+        <h2 className="mb-2 mt-0 p-0">사용자 설정</h2>
       </div>
       <div>
         <span className="font-medium">Assistant 디렉토리 이름</span>

@@ -3,16 +3,19 @@
  * Continue 프로젝트에 신규 추가한 파일입니다:
  * https://github.com/continuedev/continue
  *
- * 본 수정은 개발자 배철훈에 의해 2025-05-14에 이루어졌으며, API 호출 기능을 담당하는 클래스입니다.
+ * 본 수정은 개발자 배철훈에 의해 2025-05-15에 이루어졌으며, API 호출 기능을 담당하는 클래스입니다.
  * (1) 로그인 기능
  * (2) 로그아웃 기능
  * (3) 토큰 검증 기능
  * (4) 조직 목록 가져오기 기능
+ * (5) request 인스턴스 정의
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
+import fetch, { RequestInit, Response } from "node-fetch";
 import { IDE } from "..";
 import { OrganizationDescription } from "../config/ProfileLifecycleManager.js";
+import { getCustomApiUrl } from "../config/util";
 
 export interface CustomAuthResponse {
   success: boolean;
@@ -36,6 +39,37 @@ const CUSTOM_AUTH_TOKEN_KEY = "custom-auth-token";
 
 export class CustomAuthClient {
   constructor(private readonly ide: IDE) {}
+  //(5) request 인스턴스 정의
+  private async request(path: string, init: RequestInit): Promise<Response> {
+    let accessToken = await this.getToken();
+    if (!accessToken) {
+      accessToken = "";
+    }
+
+    const apiUrl = await getCustomApiUrl(this.ide);
+    console.log("[CustomAuth] API URL:>>>>>>>>>>>>>>>>>>>", apiUrl);
+    if (!apiUrl) {
+      throw new Error("No API URL configured");
+    }
+
+    const url = new URL(path, apiUrl).toString();
+    const resp = await fetch(url, {
+      ...init,
+      headers: {
+        ...init.headers,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!resp.ok) {
+      throw new Error(
+        `Custom API request failed: ${resp.status} ${await resp.text()}`,
+      );
+    }
+
+    return resp;
+  }
+
   // (1) 로그인 기능
   public async login(
     id: string,

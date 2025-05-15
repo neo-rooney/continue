@@ -82,6 +82,8 @@ export class ConfigHandler {
 
     this.customAuthClient = new CustomAuthClient(ide);
 
+    void initializeCustomConfig(this.ide);
+
     // This profile manager will always be available
     this.globalLocalProfileManager = new ProfileLifecycleManager(
       new LocalProfileLoader(
@@ -176,7 +178,6 @@ export class ConfigHandler {
       );
       return [...hubOrgs, personalHubOrg];
     } else if (isCustomAuthenticated) {
-      await initializeCustomConfig(this.ide);
       const customOrgDescs = await this.customAuthClient.getOrgs();
       const orgs = await Promise.all(
         customOrgDescs.organizations?.map((org) => this.getCustomOrg(org)) ??

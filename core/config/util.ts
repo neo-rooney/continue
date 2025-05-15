@@ -7,7 +7,8 @@
  * (1) 커스텀 Config 관련 메서드 추가
  * (2) 커스텀 Config 초기화 메서드 추가
  * (3) 커스텀 Config 루트 디렉토리 가져오는 메서드 추가
- * (4) 커스텀 Config 업데이트 메서드 추가
+ * (4) 커스텀 Config API URL 가져오는 메서드 추가
+ * (5) 커스텀 Config 업데이트 메서드 추가
  * ────────────────────────────────────────────────────────────────────────────────
  */
 
@@ -280,8 +281,8 @@ export async function initializeCustomConfig(ide: IDE): Promise<void> {
     console.error("Failed to initialize custom config:", error);
   }
 }
-export const DEFAULT_ROOT_DIR = ".continue";
 
+export const DEFAULT_ROOT_DIR = "";
 //(3) 커스텀 Config 루트 디렉토리 가져오는 메서드 추가
 export async function getCustomRootDir(ide: IDE): Promise<string> {
   try {
@@ -307,7 +308,35 @@ export async function getCustomRootDir(ide: IDE): Promise<string> {
   }
   return DEFAULT_ROOT_DIR;
 }
-//(4) 커스텀 Config 업데이트 메서드 추가
+
+export const DEFAULT_API_URL = "";
+//(4) 커스텀 Config API URL 가져오는 메서드 추가
+export async function getCustomApiUrl(ide: IDE): Promise<string> {
+  try {
+    const workspaceDirs = await ide.getWorkspaceDirs();
+    if (workspaceDirs.length === 0) {
+      return DEFAULT_API_URL;
+    }
+
+    const workspaceDir = workspaceDirs[0];
+    const configPath = joinPathsToUri(workspaceDir, CONFIG_FILE_NAME);
+
+    const configExists = await ide.fileExists(configPath);
+    if (configExists) {
+      const configRaw = await ide.readFile(configPath);
+      const config = JSON.parse(configRaw);
+      return config?.assistant?.apiUrl || DEFAULT_API_URL;
+    }
+  } catch (error) {
+    console.warn(
+      "Failed to load custom config, using default root dir:",
+      error,
+    );
+  }
+  return DEFAULT_API_URL;
+}
+
+//(5) 커스텀 Config 업데이트 메서드 추가
 export async function updateCustomConfig(
   ide: IDE,
   rootDir: string,

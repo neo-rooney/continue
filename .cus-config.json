@@ -1,5 +1,6 @@
 {
   "assistant": {
-    "rootDir": ".test1232"
+    "rootDir": ".test1232",
+    "apiUrl": "https://api.test.dev"
   }
 }

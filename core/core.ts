@@ -19,7 +19,14 @@ import { v4 as uuidv4 } from "uuid";
 import { CompletionProvider } from "./autocomplete/CompletionProvider";
 import { ConfigHandler } from "./config/ConfigHandler";
 import { SYSTEM_PROMPT_DOT_FILE } from "./config/getWorkspaceContinueRuleDotFiles";
-import { addModel, deleteModel, getCustomRootDir } from "./config/util";
+import {
+  addModel,
+  DEFAULT_API_URL,
+  DEFAULT_ROOT_DIR,
+  deleteModel,
+  getCustomApiUrl,
+  getCustomRootDir,
+} from "./config/util";
 import CodebaseContextProvider from "./context/providers/CodebaseContextProvider";
 import CurrentFileContextProvider from "./context/providers/CurrentFileContextProvider";
 import { recentlyEditedFilesCache } from "./context/retrieval/recentlyEditedFilesCache";
@@ -817,11 +824,11 @@ export class Core {
     on("custom/getConfig", async () => {
       try {
         const rootDir = await getCustomRootDir(this.ide);
-        const apiUrl = "";
+        const apiUrl = await getCustomApiUrl(this.ide);
         return { rootDir, apiUrl };
       } catch (error) {
         console.error("Failed to get custom settings:", error);
-        return { rootDir: "", apiUrl: "" };
+        return { rootDir: DEFAULT_ROOT_DIR, apiUrl: DEFAULT_API_URL };
       }
     });
     // (5) Custom Config 설정 핸들러 정의

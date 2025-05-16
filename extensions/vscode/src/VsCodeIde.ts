@@ -1,3 +1,13 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 VsCodeIde.ts 파일을 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-15에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) 파일 삭제 메서드 추가
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import * as child_process from "node:child_process";
 import { exec } from "node:child_process";
 
@@ -335,7 +345,10 @@ class VsCodeIde implements IDE {
     const pathToLastModified: FileStatsMap = {};
     await Promise.all(
       files.map(async (file) => {
-        const stat = await this.ideUtils.stat(vscode.Uri.parse(file), false /* No need to catch ENOPRO exceptions */);
+        const stat = await this.ideUtils.stat(
+          vscode.Uri.parse(file),
+          false /* No need to catch ENOPRO exceptions */,
+        );
         pathToLastModified[file] = {
           lastModified: stat!.mtime,
           size: stat!.size,
@@ -401,7 +414,8 @@ class VsCodeIde implements IDE {
     const configs: ContinueRcJson[] = [];
     for (const workspaceDir of workspaceDirs) {
       const files = await this.ideUtils.readDirectory(workspaceDir);
-      if (files === null) {//Unlikely, but just in case...
+      if (files === null) {
+        //Unlikely, but just in case...
         continue;
       }
       for (const [filename, type] of files) {
@@ -753,7 +767,7 @@ class VsCodeIde implements IDE {
 
   async listDir(dir: string): Promise<[string, FileType][]> {
     const entries = await this.ideUtils.readDirectory(vscode.Uri.parse(dir));
-    return entries === null? [] : entries as any;
+    return entries === null ? [] : (entries as any);
   }
 
   private getIdeSettingsSync(): IdeSettings {
@@ -781,6 +795,17 @@ class VsCodeIde implements IDE {
   async getIdeSettings(): Promise<IdeSettings> {
     const ideSettings = this.getIdeSettingsSync();
     return ideSettings;
+  }
+  //(1) 파일 삭제 메서드 추가
+  async deleteFile(fileUri: string): Promise<void> {
+    try {
+      await vscode.workspace.fs.delete(vscode.Uri.parse(fileUri));
+    } catch (error) {
+      if (error instanceof vscode.FileSystemError) {
+        throw new Error(`Failed to delete file: ${error.message}`);
+      }
+      throw error;
+    }
   }
 }
 

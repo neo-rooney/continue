@@ -1,3 +1,13 @@
+/**
+ * ────────────────────────────────────────────────────────────────────────────────
+ * Continue 프로젝트의 index.d.ts 파일을 수정한 버전입니다:
+ * https://github.com/continuedev/continue
+ *
+ * 본 수정은 개발자 배철훈에 의해 2025-05-15에 이루어졌으며, 수정 사항은 다음과 같습니다.
+ * (1) 파일 삭제 타입 추가
+ * ────────────────────────────────────────────────────────────────────────────────
+ */
+
 import {
   DataDestination,
   ModelRole,
@@ -819,6 +829,9 @@ export interface IDE {
 
   // Callbacks
   onDidChangeActiveTextEditor(callback: (fileUri: string) => void): void;
+
+  // (1) 파일 삭제 타입 추가
+  deleteFile(fileUri: string): Promise<void>;
 }
 
 // Slash Commands

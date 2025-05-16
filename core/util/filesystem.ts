@@ -21,6 +21,12 @@ import { GetGhTokenArgs } from "../protocol/ide.js";
 
 class FileSystemIde implements IDE {
   constructor(private readonly workspaceDir: string) {}
+  getLastFileSaveTimestamp?(): number {
+    throw new Error("Method not implemented.");
+  }
+  updateLastFileSaveTimestamp?(): void {
+    throw new Error("Method not implemented.");
+  }
 
   async readSecrets(keys: string[]): Promise<Record<string, string>> {
     return {};
@@ -247,6 +253,10 @@ class FileSystemIde implements IDE {
 
   async subprocess(command: string, cwd?: string): Promise<[string, string]> {
     return ["", ""];
+  }
+
+  async deleteFile(fileUri: string): Promise<void> {
+    await fs.promises.unlink(fileUri);
   }
 }
 

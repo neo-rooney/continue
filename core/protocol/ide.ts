@@ -99,8 +99,9 @@ export type ToIdeFromWebviewOrCoreProtocol = {
     ControlPlaneSessionInfo | undefined,
   ];
   logoutOfControlPlane: [undefined, void];
-  reportError:[any, void];
+  reportError: [any, void];
   closeSidebar: [undefined, void];
+  deleteFile: [{ filepath: string }, void];
 };
 
 export type ToWebviewOrCoreFromIdeProtocol = {

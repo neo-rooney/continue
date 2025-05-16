@@ -19,11 +19,12 @@ export default function CustomSesstion() {
 
   return (
     <div className="flex w-full flex-col gap-3">
+      <h2 className="mb-2 mt-0 p-0">사용자 정보</h2>
       <div className="flex justify-between">
         <div className="flex flex-col">
           {/* TODO: 로그인 정보 표시 */}
-          <span className="font-medium">ID 정보</span>
-          <span className="text-lightgray text-sm">Cheolhun.bae(BWG)</span>
+          <span className="font-medium">계정 정보</span>
+          <span className="text-lightgray text-sm">XXX 뱅크</span>
         </div>
         <SecondaryButton onClick={logout}>로그아웃</SecondaryButton>
       </div>

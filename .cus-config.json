@@ -1,0 +1,6 @@
+{
+  "assistant": {
+    "rootDir": ".continue",
+    "apiUrl": "https://api.test.dev"
+  }
+}

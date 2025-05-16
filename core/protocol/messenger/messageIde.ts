@@ -28,6 +28,12 @@ export class MessageIde implements IDE {
       callback: (data: FromIdeProtocol[T][0]) => FromIdeProtocol[T][1],
     ) => void,
   ) {}
+  getLastFileSaveTimestamp?(): number {
+    throw new Error("Method not implemented.");
+  }
+  updateLastFileSaveTimestamp?(): void {
+    throw new Error("Method not implemented.");
+  }
 
   async readSecrets(keys: string[]): Promise<Record<string, string>> {
     return this.request("readSecrets", { keys });
@@ -201,5 +207,9 @@ export class MessageIde implements IDE {
 
   async getBranch(dir: string): Promise<string> {
     return this.request("getBranch", { dir });
+  }
+
+  async deleteFile(fileUri: string): Promise<void> {
+    return this.request("deleteFile", { filepath: fileUri });
   }
 }
